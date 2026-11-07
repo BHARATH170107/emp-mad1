@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Examinations{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3">
+  <h2>Examinations</h2>
+  <a class="btn btn-primary" href="{{ url_for('admin.exam_new') }}">+ Add Examination</a>
+</div>
+<div class="table-responsive">
+<table class="table table-striped bg-white">
+  <thead><tr><th>ID</th><th>Name</th><th>Course</th><th>Type</th><th>Max marks</th><th>Examiner</th><th>Status</th><th>Actions</th></tr></thead>
+  <tbody>
+  {% for e in exams %}
+  <tr>
+    <td>{{ e.id }}</td><td>{{ e.name }}</td><td>{{ e.course.code }}</td>
+    <td>{{ e.exam_type }}</td><td>{{ e.max_marks }}</td>
+    <td>{{ e.examiner.user.full_name if e.examiner else '-' }}</td>
+    <td><span class="badge bg-info text-dark">{{ e.status }}</span></td>
+    <td>
+      <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.exam_detail', exam_id=e.id) }}">Manage</a>
+      <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.exam_edit', exam_id=e.id) }}">Edit</a>
+      <form method="post" action="{{ url_for('admin.exam_delete', exam_id=e.id) }}" class="d-inline">
+        <button class="btn btn-sm btn-outline-danger">Delete</button>
+      </form>
+    </td>
+  </tr>
+  {% else %}
+  <tr><td colspan="8" class="text-center text-muted">No examinations yet. Add a course first, then an examination.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}{{ exam.name }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2>{{ exam.name }}</h2>
+  <div>
+    <a class="btn btn-outline-primary" href="{{ url_for('admin.exam_edit', exam_id=exam.id) }}">Edit</a>
+    <a class="btn btn-secondary" href="{{ url_for('admin.exams') }}">Back</a>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100"><div class="card-body">
+      <h5>Details</h5>
+      <table class="table table-sm mb-0">
+        <tr><th>Course</th><td>{{ exam.course.code }} - {{ exam.course.name }}</td></tr>
+        <tr><th>Type</th><td>{{ exam.exam_type }}</td></tr>
+        <tr><th>Duration</th><td>{{ exam.duration }} min</td></tr>
+        <tr><th>Max marks</th><td>{{ exam.max_marks }}</td></tr>
+        <tr><th>Examiner</th><td>{{ exam.examiner.user.full_name if exam.examiner else 'Not assigned' }}</td></tr>
+        <tr><th>Slot creation</th><td>{{ exam.slot_creation_start or '-' }} to {{ exam.slot_creation_end or '-' }}</td></tr>
+        <tr><th>Booking</th><td>{{ exam.booking_start or '-' }} to {{ exam.booking_end or '-' }}</td></tr>
+      </table>
+    </div></div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100"><div class="card-body">
+      <h5>Status: <span class="badge bg-info text-dark">{{ exam.status }}</span></h5>
+      <p class="text-muted small">
+        <b>Slot Creation</b> = examiners can create slots.
+        <b>Booking Open</b> = students can book slots.
+        Choose <b>Closed</b> to stop either.
+      </p>
+      <form method="post" action="{{ url_for('admin.exam_status', exam_id=exam.id) }}" class="d-flex gap-2 mb-3">
+        <select name="status" class="form-select">
+          {% for s in statuses %}
+          <option {{ 'selected' if exam.status == s }}>{{ s }}</option>
+          {% endfor %}
+        </select>
+        <button class="btn btn-primary">Update</button>
+      </form>
+      <form method="post" action="{{ url_for('admin.exam_publish', exam_id=exam.id) }}">
+        <button class="btn btn-outline-{{ 'warning' if exam.results_published else 'success' }}">
+          {{ 'Hide results' if exam.results_published else 'Publish results' }}
+        </button>
+        <span class="ms-2 small text-muted">Results are {{ 'published' if exam.results_published else 'not published' }}.</span>
+      </form>
+    </div></div>
+  </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mt-4 mb-2">
+  <h4>Rubric <small class="text-muted">({{ rubric_total }} / {{ exam.max_marks }} marks used)</small></h4>
+  <a class="btn btn-primary btn-sm" href="{{ url_for('admin.rubric_new', exam_id=exam.id) }}">+ Add Criterion</a>
+</div>
+<div class="table-responsive">
+<table class="table table-striped bg-white">
+  <thead><tr><th>Criterion</th><th>Max marks</th><th>Weightage</th><th>Description</th><th>Actions</th></tr></thead>
+  <tbody>
+  {% for r in exam.rubrics %}
+  <tr>
+    <td>{{ r.criterion_name }}</td><td>{{ r.max_marks }}</td><td>{{ r.weightage }}</td><td>{{ r.description or '' }}</td>
+    <td>
+      <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.rubric_edit', rubric_id=r.id) }}">Edit</a>
+      <form method="post" action="{{ url_for('admin.rubric_delete', rubric_id=r.id) }}" class="d-inline">
+        <button class="btn btn-sm btn-outline-danger">Delete</button>
+      </form>
+    </td>
+  </tr>
+  {% else %}
+  <tr><td colspan="5" class="text-center text-muted">No rubric criteria yet.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

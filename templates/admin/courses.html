@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Courses{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3">
+  <h2>Courses</h2>
+  <a class="btn btn-primary" href="{{ url_for('admin.course_new') }}">+ Add Course</a>
+</div>
+<div class="table-responsive">
+<table class="table table-striped bg-white">
+  <thead><tr><th>ID</th><th>Code</th><th>Name</th><th>Description</th><th>Status</th><th>Exams</th><th>Actions</th></tr></thead>
+  <tbody>
+  {% for c in courses %}
+  <tr>
+    <td>{{ c.id }}</td><td>{{ c.code }}</td><td>{{ c.name }}</td>
+    <td>{{ c.description or '' }}</td>
+    <td><span class="badge bg-{{ 'success' if c.status == 'Active' else 'secondary' }}">{{ c.status }}</span></td>
+    <td>{{ c.examinations|length }}</td>
+    <td>
+      <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.course_edit', course_id=c.id) }}">Edit</a>
+      <form method="post" action="{{ url_for('admin.course_delete', course_id=c.id) }}" class="d-inline">
+        <button class="btn btn-sm btn-outline-danger">Delete</button>
+      </form>
+    </td>
+  </tr>
+  {% else %}
+  <tr><td colspan="7" class="text-center text-muted">No courses yet.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

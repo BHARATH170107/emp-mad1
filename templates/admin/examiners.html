@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Examiners{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3">
+  <h2>Examiners</h2>
+  <a class="btn btn-primary" href="{{ url_for('admin.examiner_new') }}">+ Add Examiner</a>
+</div>
+<div class="table-responsive">
+<table class="table table-striped bg-white">
+  <thead><tr><th>ID</th><th>Name</th><th>Username</th><th>Email</th><th>Department</th><th>Status</th><th>Actions</th></tr></thead>
+  <tbody>
+  {% for p in examiners %}
+  <tr>
+    <td>{{ p.id }}</td><td>{{ p.user.full_name }}</td><td>{{ p.user.username }}</td>
+    <td>{{ p.user.email }}</td><td>{{ p.department }}</td>
+    <td><span class="badge bg-{{ {'Approved': 'success', 'Pending': 'warning', 'Deactivated': 'secondary'}[p.status] }}">{{ p.status }}</span></td>
+    <td>
+      <form method="post" action="{{ url_for('admin.examiner_status', profile_id=p.id) }}" class="d-inline">
+        {% if p.status == 'Pending' %}
+          <button name="status" value="Approved" class="btn btn-sm btn-success">Approve</button>
+          <button name="status" value="Deactivated" class="btn btn-sm btn-outline-danger">Reject</button>
+        {% elif p.status == 'Approved' %}
+          <button name="status" value="Deactivated" class="btn btn-sm btn-outline-danger">Deactivate</button>
+        {% else %}
+          <button name="status" value="Approved" class="btn btn-sm btn-outline-success">Reactivate</button>
+        {% endif %}
+      </form>
+    </td>
+  </tr>
+  {% else %}
+  <tr><td colspan="7" class="text-center text-muted">No examiners yet.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

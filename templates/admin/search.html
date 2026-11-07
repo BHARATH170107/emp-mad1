@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Search{% endblock %}
+{% block content %}
+<h2 class="mb-3">Search</h2>
+<form method="get" class="row g-2 mb-4">
+  <div class="col-md-3">
+    <select name="type" class="form-select">
+      {% for value, label in [('students', 'Students'), ('examiners', 'Examiners'), ('exams', 'Examinations'), ('bookings', 'Bookings')] %}
+      <option value="{{ value }}" {{ 'selected' if kind == value }}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-7"><input name="q" class="form-control" placeholder="Name or ID" value="{{ q }}"></div>
+  <div class="col-md-2"><button class="btn btn-primary w-100">Search</button></div>
+</form>
+
+{% if q %}
+  <p class="text-muted">{{ results|length }} result(s) for "{{ q }}"</p>
+  <div class="table-responsive">
+  <table class="table table-striped bg-white">
+  {% if kind == 'students' %}
+    <thead><tr><th>ID</th><th>Name</th><th>Username</th><th>Email</th></tr></thead>
+    {% for s in results %}<tr><td>{{ s.id }}</td><td>{{ s.full_name }}</td><td>{{ s.username }}</td><td>{{ s.email }}</td></tr>{% endfor %}
+  {% elif kind == 'examiners' %}
+    <thead><tr><th>ID</th><th>Name</th><th>Department</th><th>Status</th></tr></thead>
+    {% for p in results %}<tr><td>{{ p.id }}</td><td>{{ p.user.full_name }}</td><td>{{ p.department }}</td><td>{{ p.status }}</td></tr>{% endfor %}
+  {% elif kind == 'exams' %}
+    <thead><tr><th>ID</th><th>Name</th><th>Course</th><th>Status</th><th></th></tr></thead>
+    {% for e in results %}<tr><td>{{ e.id }}</td><td>{{ e.name }}</td><td>{{ e.course.code }}</td><td>{{ e.status }}</td>
+      <td><a href="{{ url_for('admin.exam_detail', exam_id=e.id) }}">Manage</a></td></tr>{% endfor %}
+  {% else %}
+    <thead><tr><th>ID</th><th>Student</th><th>Examination</th><th>Status</th></tr></thead>
+    {% for b in results %}<tr><td>{{ b.id }}</td><td>{{ b.student.full_name }}</td><td>{{ b.examination.name }}</td><td>{{ b.status }}</td></tr>{% endfor %}
+  {% endif %}
+  </table>
+  </div>
+{% endif %}
+{% endblock %}

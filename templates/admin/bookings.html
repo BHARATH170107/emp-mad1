@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Bookings{% endblock %}
+{% block content %}
+<h2 class="mb-3">All Bookings</h2>
+<div class="table-responsive">
+<table class="table table-striped bg-white">
+  <thead><tr><th>ID</th><th>Student</th><th>Examination</th><th>Slot date</th><th>Time</th><th>Booked on</th><th>Status</th></tr></thead>
+  <tbody>
+  {% for b in bookings %}
+  <tr><td>{{ b.id }}</td><td>{{ b.student.full_name }}</td><td>{{ b.examination.name }}</td>
+      <td>{{ b.slot.date }}</td><td>{{ b.slot.start_time.strftime('%H:%M') }} - {{ b.slot.end_time.strftime('%H:%M') }}</td>
+      <td>{{ b.booking_date.strftime('%Y-%m-%d') }}</td><td>{{ b.status }}</td></tr>
+  {% else %}
+  <tr><td colspan="7" class="text-center text-muted">No bookings yet.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}
