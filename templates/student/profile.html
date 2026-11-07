@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}My Profile{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-md-6">
+<div class="card shadow-sm"><div class="card-body">
+  <h3 class="mb-3">My Profile</h3>
+  <form method="post">
+    <div class="mb-3"><label class="form-label">Full name</label>
+      <input name="full_name" class="form-control" value="{{ f.get('full_name', '') }}" required></div>
+    <div class="mb-3"><label class="form-label">Email</label>
+      <input type="email" name="email" class="form-control" value="{{ f.get('email', '') }}" required></div>
+    <div class="mb-3"><label class="form-label">Phone</label>
+      <input name="phone" class="form-control" value="{{ f.get('phone', '') }}"></div>
+    <button class="btn btn-primary">Update profile</button>
+  </form>
+</div></div></div></div>
+{% endblock %}

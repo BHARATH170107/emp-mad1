@@ -22,6 +22,25 @@
       <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.search') }}">Search</a></li>
     </ul>
     {% endif %}
+    {% if current_user.is_authenticated and current_user.role == 'examiner' %}
+    <ul class="navbar-nav me-auto flex-wrap">
+      <li class="nav-item"><a class="nav-link" href="{{ url_for('examiner.dashboard') }}">Dashboard</a></li>
+      <li class="nav-item"><a class="nav-link" href="{{ url_for('examiner.exams') }}">My Exams</a></li>
+      <li class="nav-item"><a class="nav-link" href="{{ url_for('examiner.slots') }}">My Slots</a></li>
+      <li class="nav-item"><a class="nav-link" href="{{ url_for('examiner.pending') }}">Pending Evaluations</a></li>
+      <li class="nav-item"><a class="nav-link" href="{{ url_for('examiner.profile') }}">Profile</a></li>
+    </ul>
+    {% endif %}
+    {% if current_user.is_authenticated and current_user.role == 'student' %}
+    <ul class="navbar-nav me-auto flex-wrap">
+      <li class="nav-item"><a class="nav-link" href="{{ url_for('student.dashboard') }}">Dashboard</a></li>
+      <li class="nav-item"><a class="nav-link" href="{{ url_for('student.exams') }}">Examinations</a></li>
+      <li class="nav-item"><a class="nav-link" href="{{ url_for('student.bookings') }}">My Bookings</a></li>
+      <li class="nav-item"><a class="nav-link" href="{{ url_for('student.schedule') }}">Schedule</a></li>
+      <li class="nav-item"><a class="nav-link" href="{{ url_for('student.results') }}">Results</a></li>
+      <li class="nav-item"><a class="nav-link" href="{{ url_for('student.profile') }}">Profile</a></li>
+    </ul>
+    {% endif %}
     <div class="ms-auto d-flex align-items-center text-white">
       {% if current_user.is_authenticated %}
         <span class="me-3">{{ current_user.full_name }} ({{ current_user.role }})</span>

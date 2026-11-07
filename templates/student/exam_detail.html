@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}{{ exam.name }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3">
+  <h2>{{ exam.name }}</h2>
+  <a class="btn btn-secondary" href="{{ url_for('student.exams') }}">Back</a>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-6"><div class="card shadow-sm h-100"><div class="card-body">
+    <table class="table table-sm mb-0">
+      <tr><th>Course</th><td>{{ exam.course.code }} - {{ exam.course.name }}</td></tr>
+      <tr><th>Type</th><td>{{ exam.exam_type }}</td></tr>
+      <tr><th>Duration</th><td>{{ exam.duration }} min</td></tr>
+      <tr><th>Maximum marks</th><td>{{ exam.max_marks }}</td></tr>
+      <tr><th>Examiner</th><td>{{ exam.examiner.user.full_name if exam.examiner else '-' }}</td></tr>
+      <tr><th>Booking window</th><td>{{ exam.booking_start or '-' }} to {{ exam.booking_end or '-' }}</td></tr>
+      <tr><th>Status</th><td>{{ exam.status }}</td></tr>
+    </table>
+  </div></div></div>
+  <div class="col-md-6"><div class="card shadow-sm h-100"><div class="card-body">
+    <h5>Evaluation criteria</h5>
+    <ul class="mb-0">
+      {% for r in exam.rubrics %}<li>{{ r.criterion_name }} ({{ r.max_marks }} marks)</li>
+      {% else %}<li class="text-muted">Not published yet.</li>{% endfor %}
+    </ul>
+  </div></div></div>
+</div>
+
+{% if mine %}
+<div class="alert alert-success">You already have a booking for this examination.
+  <a href="{{ url_for('student.bookings') }}" class="alert-link">View my bookings</a></div>
+{% elif not is_open %}
+<div class="alert alert-secondary">Slot booking is not open for this examination right now.</div>
+{% endif %}
+
+<h4>Slots</h4>
+<div class="table-responsive">
+<table class="table table-striped bg-white">
+  <thead><tr><th>Date</th><th>Time</th><th>Examiner</th><th>Seats left</th><th>Status</th><th></th></tr></thead>
+  <tbody>
+  {% for s in slots %}
+  <tr>
+    <td>{{ s.date }}</td><td>{{ s.start_time.strftime('%H:%M') }} - {{ s.end_time.strftime('%H:%M') }}</td>
+    <td>{{ s.examiner.user.full_name }}</td><td>{{ s.available_seats }} / {{ s.capacity }}</td>
+    <td><span class="badge bg-{{ 'success' if s.status == 'Available' else 'secondary' }}">{{ s.status }}</span></td>
+    <td>
+      {% if is_open and not mine and s.status == 'Available' and s.available_seats > 0 %}
+      <form method="post" action="{{ url_for('student.book', slot_id=s.id) }}">
+        <button class="btn btn-sm btn-primary">Book</button>
+      </form>
+      {% endif %}
+    </td>
+  </tr>
+  {% else %}
+  <tr><td colspan="6" class="text-center text-muted">No upcoming slots yet.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

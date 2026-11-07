@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Examinations{% endblock %}
+{% block content %}
+<h2 class="mb-3">Examinations</h2>
+<form method="get" class="row g-2 mb-3">
+  <div class="col-md-4"><input name="q" class="form-control" placeholder="Search name or course" value="{{ q }}"></div>
+  <div class="col-md-2">
+    <select name="type" class="form-select">
+      <option value="">All types</option>
+      {% for t in exam_types %}<option {{ 'selected' if etype == t }}>{{ t }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-md-3">
+    <select name="course" class="form-select">
+      <option value="">All courses</option>
+      {% for c in courses %}<option value="{{ c.id }}" {{ 'selected' if course_id == c.id }}>{{ c.code }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2 d-flex align-items-center">
+    <div class="form-check"><input class="form-check-input" type="checkbox" name="open" value="1" id="open" {{ 'checked' if only_open }}>
+      <label class="form-check-label" for="open">Booking open only</label></div>
+  </div>
+  <div class="col-md-1"><button class="btn btn-primary w-100">Go</button></div>
+</form>
+
+<div class="table-responsive">
+<table class="table table-striped bg-white">
+  <thead><tr><th>Name</th><th>Course</th><th>Type</th><th>Duration</th><th>Booking window</th><th>Status</th><th></th></tr></thead>
+  <tbody>
+  {% for e, is_open, mine in rows %}
+  <tr>
+    <td>{{ e.name }}</td><td>{{ e.course.code }}</td><td>{{ e.exam_type }}</td><td>{{ e.duration }} min</td>
+    <td>{{ e.booking_start or '-' }} to {{ e.booking_end or '-' }}</td>
+    <td>
+      {% if mine %}<span class="badge bg-success">You booked</span>
+      {% elif is_open %}<span class="badge bg-primary">Booking open</span>
+      {% else %}<span class="badge bg-secondary">{{ e.status }}</span>{% endif %}
+    </td>
+    <td><a class="btn btn-sm btn-outline-primary" href="{{ url_for('student.exam_detail', exam_id=e.id) }}">View</a></td>
+  </tr>
+  {% else %}
+  <tr><td colspan="7" class="text-center text-muted">No examinations found.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

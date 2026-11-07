@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}My Bookings{% endblock %}
+{% block content %}
+<h2 class="mb-3">My Bookings and History</h2>
+<div class="table-responsive">
+<table class="table table-striped bg-white">
+  <thead><tr><th>ID</th><th>Examination</th><th>Date</th><th>Time</th><th>Booked on</th><th>Status</th><th>Action</th></tr></thead>
+  <tbody>
+  {% for b, cancellable in rows %}
+  <tr>
+    <td>{{ b.id }}</td><td>{{ b.examination.name }}</td><td>{{ b.slot.date }}</td>
+    <td>{{ b.slot.start_time.strftime('%H:%M') }} - {{ b.slot.end_time.strftime('%H:%M') }}</td>
+    <td>{{ b.booking_date.strftime('%Y-%m-%d') }}</td>
+    <td><span class="badge bg-{{ {'Booked': 'primary', 'Completed': 'success', 'Cancelled': 'secondary'}[b.status] }}">{{ b.status }}</span></td>
+    <td>
+      {% if cancellable %}
+      <form method="post" action="{{ url_for('student.cancel', booking_id=b.id) }}">
+        <button class="btn btn-sm btn-outline-danger">Cancel</button>
+      </form>
+      {% elif b.evaluation and b.examination.results_published %}
+      <a class="btn btn-sm btn-outline-success" href="{{ url_for('student.results') }}">View result</a>
+      {% endif %}
+    </td>
+  </tr>
+  {% else %}
+  <tr><td colspan="7" class="text-center text-muted">You have no bookings yet.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}
