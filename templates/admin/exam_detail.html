@@ -4,6 +4,7 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h2>{{ exam.name }}</h2>
   <div>
+    <a class="btn btn-outline-warning" href="{{ url_for('admin.exam_change_examiner', exam_id=exam.id) }}">Change examiner</a>
     <a class="btn btn-outline-primary" href="{{ url_for('admin.exam_edit', exam_id=exam.id) }}">Edit</a>
     <a class="btn btn-secondary" href="{{ url_for('admin.exams') }}">Back</a>
   </div>

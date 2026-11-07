@@ -4,14 +4,17 @@
 <h2 class="mb-3">All Examination Slots</h2>
 <div class="table-responsive">
 <table class="table table-striped bg-white">
-  <thead><tr><th>ID</th><th>Examination</th><th>Examiner</th><th>Date</th><th>Time</th><th>Seats left</th><th>Status</th></tr></thead>
+  <thead><tr><th>ID</th><th>Examination</th><th>Examiner</th><th>Date</th><th>Time</th><th>Seats left</th><th>Status</th><th>Action</th></tr></thead>
   <tbody>
   {% for s in slots %}
   <tr><td>{{ s.id }}</td><td>{{ s.examination.name }}</td><td>{{ s.examiner.user.full_name }}</td>
       <td>{{ s.date }}</td><td>{{ s.start_time.strftime('%H:%M') }} - {{ s.end_time.strftime('%H:%M') }}</td>
-      <td>{{ s.available_seats }} / {{ s.capacity }}</td><td>{{ s.status }}</td></tr>
+      <td>{{ s.available_seats }} / {{ s.capacity }}</td><td>{{ s.status }}</td>
+      <td>{% if s.status in ['Available', 'Full'] %}
+        <a class="btn btn-sm btn-outline-warning" href="{{ url_for('admin.slot_change_examiner', slot_id=s.id) }}">Change examiner</a>
+      {% endif %}</td></tr>
   {% else %}
-  <tr><td colspan="7" class="text-center text-muted">No slots yet.</td></tr>
+  <tr><td colspan="8" class="text-center text-muted">No slots yet.</td></tr>
   {% endfor %}
   </tbody>
 </table>

@@ -2,16 +2,39 @@
 {% block title %}Bookings{% endblock %}
 {% block content %}
 <h2 class="mb-3">All Bookings</h2>
+<form method="get" class="row g-2 mb-3">
+  <div class="col-md-4">
+    <select name="exam" class="form-select">
+      <option value="">All examinations</option>
+      {% for e in exams %}<option value="{{ e.id }}" {{ 'selected' if exam_id == e.id }}>{{ e.name }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-md-3">
+    <select name="status" class="form-select">
+      <option value="">All statuses</option>
+      {% for s in ['Booked', 'Completed', 'Cancelled'] %}<option {{ 'selected' if status == s }}>{{ s }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2"><button class="btn btn-primary w-100">Filter</button></div>
+</form>
 <div class="table-responsive">
 <table class="table table-striped bg-white">
-  <thead><tr><th>ID</th><th>Student</th><th>Examination</th><th>Slot date</th><th>Time</th><th>Booked on</th><th>Status</th></tr></thead>
+  <thead><tr><th>ID</th><th>Student</th><th>Examination</th><th>Examiner</th><th>Slot</th><th>Booked on</th><th>Status</th><th>Marks</th><th>Action</th></tr></thead>
   <tbody>
   {% for b in bookings %}
-  <tr><td>{{ b.id }}</td><td>{{ b.student.full_name }}</td><td>{{ b.examination.name }}</td>
-      <td>{{ b.slot.date }}</td><td>{{ b.slot.start_time.strftime('%H:%M') }} - {{ b.slot.end_time.strftime('%H:%M') }}</td>
-      <td>{{ b.booking_date.strftime('%Y-%m-%d') }}</td><td>{{ b.status }}</td></tr>
+  <tr>
+    <td>{{ b.id }}</td><td>{{ b.student.full_name }}</td><td>{{ b.examination.name }}</td>
+    <td>{{ b.slot.examiner.user.full_name }}</td>
+    <td>{{ b.slot.date }} {{ b.slot.start_time.strftime('%H:%M') }}-{{ b.slot.end_time.strftime('%H:%M') }}</td>
+    <td>{{ b.booking_date.strftime('%Y-%m-%d') }}</td>
+    <td>{{ b.status }}</td>
+    <td>{% if b.evaluation %}{{ b.evaluation.total_marks }} / {{ b.examination.max_marks }}{% else %}-{% endif %}</td>
+    <td>{% if b.status == 'Booked' %}
+      <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.booking_reschedule', booking_id=b.id) }}">Reschedule</a>
+    {% endif %}</td>
+  </tr>
   {% else %}
-  <tr><td colspan="7" class="text-center text-muted">No bookings yet.</td></tr>
+  <tr><td colspan="9" class="text-center text-muted">No bookings found.</td></tr>
   {% endfor %}
   </tbody>
 </table>

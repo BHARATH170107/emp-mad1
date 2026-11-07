@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Change Examiner{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-md-6">
+<div class="card shadow-sm"><div class="card-body">
+  <h3 class="mb-1">Change Assigned Examiner</h3>
+  <p class="text-muted">{{ exam.name }}<br>Current: {{ exam.examiner.user.full_name if exam.examiner else 'none' }}</p>
+  <form method="post">
+    <div class="mb-3"><label class="form-label">New examiner</label>
+      <select name="examiner_id" class="form-select" required>
+        <option value="">-- choose --</option>
+        {% for p in examiners %}
+        <option value="{{ p.id }}" {{ 'disabled' if exam.examiner_id == p.id }}>{{ p.user.full_name }} ({{ p.department }})</option>
+        {% endfor %}
+      </select></div>
+    <div class="form-check mb-3">
+      <input class="form-check-input" type="checkbox" name="move_slots" value="1" id="mv" checked>
+      <label class="form-check-label" for="mv">Also move this examination's existing slots (and their booked students) to the new examiner</label>
+    </div>
+    <button class="btn btn-warning">Change examiner</button>
+    <a class="btn btn-secondary" href="{{ url_for('admin.exam_detail', exam_id=exam.id) }}">Cancel</a>
+  </form>
+</div></div></div></div>
+{% endblock %}

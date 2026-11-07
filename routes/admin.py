@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import current_user
 from sqlalchemy import or_
@@ -234,6 +234,11 @@ def exam_status(exam_id):
         flash("Invalid status.", "danger")
     else:
         exam.status = status
+        for s_ in exam.slots:
+            if status == "Completed" and s_.status != "Cancelled":
+                s_.status = "Completed"
+            elif status != "Completed" and s_.status == "Completed":
+                s_.status = "Full" if s_.available_seats == 0 else "Available"
         db.session.commit()
         flash(f"Status changed to {status}.", "success")
     return redirect(url_for("admin.exam_detail", exam_id=exam.id))
@@ -401,8 +406,16 @@ def slots():
 
 @admin_bp.route("/bookings")
 def bookings():
-    return render_template("admin/bookings.html",
-                           bookings=Booking.query.order_by(Booking.id.desc()).all())
+    status = request.args.get("status", "")
+    exam_id = to_int(request.args.get("exam"))
+    query = Booking.query
+    if status in ("Booked", "Completed", "Cancelled"):
+        query = query.filter(Booking.status == status)
+    if exam_id:
+        query = query.filter(Booking.examination_id == exam_id)
+    return render_template("admin/bookings.html", bookings=query.order_by(Booking.id.desc()).all(),
+                           exams=Examination.query.order_by(Examination.name).all(),
+                           status=status, exam_id=exam_id)
 
 
 # ---------- search ----------
@@ -439,3 +452,127 @@ def search():
                        .join(Examination, Booking.examination_id == Examination.id)
                        .filter(cond).all())
     return render_template("admin/search.html", q=q, kind=kind, results=results)
+
+
+# ================= Milestone 6: reschedule, change examiner, history =================
+def examiner_conflict(examiner_id, d, start, end):
+    """True if this examiner already has a (non-cancelled) slot overlapping that time."""
+    others = ExaminationSlot.query.filter(ExaminationSlot.examiner_id == examiner_id,
+                                          ExaminationSlot.date == d,
+                                          ExaminationSlot.status != "Cancelled")
+    return any(start < o.end_time and end > o.start_time for o in others)
+
+
+@admin_bp.route("/bookings/<int:booking_id>/reschedule", methods=["GET", "POST"])
+def booking_reschedule(booking_id):
+    booking = db.get_or_404(Booking, booking_id)
+    if booking.status != "Booked":
+        flash("Only bookings with status Booked can be rescheduled.", "danger")
+        return redirect(url_for("admin.bookings"))
+
+    exam = booking.examination
+    options = (ExaminationSlot.query
+               .filter(ExaminationSlot.examination_id == exam.id,
+                       ExaminationSlot.id != booking.slot_id,
+                       ExaminationSlot.status == "Available",
+                       ExaminationSlot.available_seats > 0,
+                       ExaminationSlot.date >= date.today())
+               .order_by(ExaminationSlot.date, ExaminationSlot.start_time).all())
+
+    if request.method == "POST":
+        new_slot = db.session.get(ExaminationSlot, to_int(request.form.get("slot_id")) or 0)
+        error = None
+        if not new_slot or new_slot not in options:
+            error = "Choose one of the available slots."
+        else:
+            for b in Booking.query.filter(Booking.student_id == booking.student_id,
+                                          Booking.status == "Booked", Booking.id != booking.id):
+                o = b.slot
+                if o.date == new_slot.date and new_slot.start_time < o.end_time and new_slot.end_time > o.start_time:
+                    error = "That slot overlaps another examination this student has booked."
+                    break
+        if error:
+            flash(error, "danger")
+        else:
+            old = booking.slot
+            old.available_seats += 1
+            if old.status == "Full":
+                old.status = "Available"
+            new_slot.available_seats -= 1
+            if new_slot.available_seats == 0:
+                new_slot.status = "Full"
+            booking.slot_id = new_slot.id
+            db.session.commit()
+            flash("Booking rescheduled.", "success")
+            return redirect(url_for("admin.bookings"))
+    return render_template("admin/reschedule.html", booking=booking, options=options)
+
+
+@admin_bp.route("/exams/<int:exam_id>/examiner", methods=["GET", "POST"])
+def exam_change_examiner(exam_id):
+    exam = db.get_or_404(Examination, exam_id)
+    examiners = ExaminerProfile.query.filter_by(status="Approved").all()
+    if request.method == "POST":
+        new = ExaminerProfile.query.filter_by(id=to_int(request.form.get("examiner_id")) or 0,
+                                              status="Approved").first()
+        move = request.form.get("move_slots") == "1"
+        error = None
+        moving = []
+        if not new:
+            error = "Choose an approved examiner."
+        elif move:
+            moving = [sl for sl in exam.slots if sl.status != "Cancelled" and sl.examiner_id != new.id]
+            for sl in moving:
+                if examiner_conflict(new.id, sl.date, sl.start_time, sl.end_time):
+                    error = f"{new.user.full_name} already has a slot overlapping {sl.date} {sl.start_time.strftime('%H:%M')}."
+                    break
+        if error:
+            flash(error, "danger")
+        else:
+            exam.examiner_id = new.id
+            for sl in moving:
+                sl.examiner_id = new.id
+            db.session.commit()
+            flash(f"Examiner changed to {new.user.full_name}.", "success")
+            return redirect(url_for("admin.exam_detail", exam_id=exam.id))
+    return render_template("admin/exam_change_examiner.html", exam=exam, examiners=examiners)
+
+
+@admin_bp.route("/slots/<int:slot_id>/examiner", methods=["GET", "POST"])
+def slot_change_examiner(slot_id):
+    slot = db.get_or_404(ExaminationSlot, slot_id)
+    examiners = ExaminerProfile.query.filter_by(status="Approved").all()
+    if request.method == "POST":
+        new = ExaminerProfile.query.filter_by(id=to_int(request.form.get("examiner_id")) or 0,
+                                              status="Approved").first()
+        error = None
+        if not new:
+            error = "Choose an approved examiner."
+        elif new.id == slot.examiner_id:
+            error = "That examiner is already assigned to this slot."
+        elif examiner_conflict(new.id, slot.date, slot.start_time, slot.end_time):
+            error = f"{new.user.full_name} already has a slot at that time."
+        if error:
+            flash(error, "danger")
+        else:
+            slot.examiner_id = new.id
+            db.session.commit()
+            flash(f"Slot now belongs to {new.user.full_name}.", "success")
+            return redirect(url_for("admin.slots"))
+    return render_template("admin/slot_change_examiner.html", slot=slot, examiners=examiners)
+
+
+@admin_bp.route("/history")
+def history():
+    rows = []
+    for e in Examination.query.order_by(Examination.id.desc()):
+        bs = e.bookings
+        rows.append({
+            "exam": e,
+            "slots": sum(1 for sl in e.slots if sl.status != "Cancelled"),
+            "booked": sum(1 for b in bs if b.status == "Booked"),
+            "completed": sum(1 for b in bs if b.status == "Completed"),
+            "cancelled": sum(1 for b in bs if b.status == "Cancelled"),
+            "evaluated": sum(1 for b in bs if b.evaluation),
+        })
+    return render_template("admin/history.html", rows=rows)

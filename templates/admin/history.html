@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}History{% endblock %}
+{% block content %}
+<h2 class="mb-3">Examination History</h2>
+<div class="table-responsive">
+<table class="table table-striped bg-white">
+  <thead><tr><th>ID</th><th>Examination</th><th>Course</th><th>Status</th><th>Slots</th><th>Booked</th><th>Completed</th><th>Cancelled</th><th>Evaluated</th><th></th></tr></thead>
+  <tbody>
+  {% for r in rows %}
+  <tr><td>{{ r.exam.id }}</td><td>{{ r.exam.name }}</td><td>{{ r.exam.course.code }}</td><td>{{ r.exam.status }}</td>
+      <td>{{ r.slots }}</td><td>{{ r.booked }}</td><td>{{ r.completed }}</td><td>{{ r.cancelled }}</td><td>{{ r.evaluated }}</td>
+      <td><a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.bookings', exam=r.exam.id) }}">Bookings</a></td></tr>
+  {% else %}
+  <tr><td colspan="10" class="text-center text-muted">No examinations yet.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}
